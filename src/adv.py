@@ -1,5 +1,6 @@
 from room import Room
 from player import Player
+from items import Items
 # Declare all the rooms
 room = {
     'outside':  Room("Outside Cave Entrance", """North of you, the cave mount beckons"""),
@@ -28,6 +29,26 @@ room['overlook'].s_to = room['foyer']#overlook s to foyer
 room['narrow'].w_to = room['foyer']#narrow w to foyer
 room['narrow'].n_to = room['treasure']#narrow north to treasure
 room['treasure'].s_to = room['narrow']#treasure south to narrow
+
+#Declare all the items
+items = {
+    'sword':Items("sword", "a small yet sharp sword"),
+    'staff':Items("staff", "a slightly magical stick"),
+    'shield':Items("shield", "a small, and not very sturdy plank"),
+    'gold':Items("gold", "this would be worth a lot of money, in another time"),
+    'rope':Items("rope", "a bunch of rope"),
+    'lantern':Items("lantern", "'How is this thing working?"),
+    'soda':Items("soda", "an unopened can, it's bent out of shape")
+}
+
+#Add Items to Rooms
+room['outside'].add_item(items['sword'])
+room['foyer'].add_item(items['staff'])
+room['overlook'].add_item(items['lantern'])
+room['narrow'].add_item(items['rope'])
+room['foyer'].add_item(items['soda'])
+room['treasure'].add_item(items['gold'])
+room['overlook'].add_item(items['shield'])
 
 #
 # Main
@@ -72,16 +93,51 @@ def check_move(move):
 
 while True:
     current = new_player.room
+    item = new_player.room.room_items
     movement_choice = ['n', 's', 'w', 'e']
-    print(f"\n Welcome, {new_player.name}! Your current location is {current}.")
+    print(f"{new_player.name}, your current location is {current}.")
+    print(f"\n Items in the area:")
+    for i in item:
+        print(i)
     print(f"------------------------------------------")
-    choice = input(f"'What would you like to do?' | Move: [n, s, w, e] | Quit: [q] |\n")
+    choice = input(f"'What would you like to do?' | Move: [n, s, w, e] | Interact: [ pickup (item), drop (item), i (inventory)] | Quit: [q] |\n")
 
     if choice in movement_choice:
         check_move(choice)
         print(f"------------------------------------------")
+    
+    elif choice == "i" or choice == "inventory":
+        print('\n Inventory:')
+        for i in new_player.inventory:
+            print(i)
+
+    elif choice.split()[0] == "pickup":
+        item_choice = choice.split()[1]
+        if item_choice in items.keys():
+            if items[item_choice] in item:
+                new_player.pickup_item(items[item_choice])
+                current.remove_item(items[item_choice])
+                items[item_choice].on_pickup()
+            else:
+                print("\n Item isn't in this room. :(")
+        else:
+            print("\n Item does not exist! :(")
+        
+    elif choice.split()[0] == "drop":
+        item_to_drop = choice.split()[1]
+        if item_to_drop in items.keys():
+            if items[item_to_drop] in new_player.inventory:
+                new_player.drop_item(items[item_to_drop])
+                current.add_item(items[item_to_drop])
+                items[item_to_drop].on_drop()
+            else:
+                print(f"You don't own a {items[item_to_drop].name}")
+        else:
+            print("\n That doesn't exist! :(")
+
     elif choice == "q":
         print("Quitters never win, & winners never quit- \n Farewell for now ... \n")
         exit()
+    
     else:
         print("\n You can't move that way, something blocks your path. \n")
